@@ -1,6 +1,5 @@
 package mapper;
 
-import exception.EntityMapException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import model.dto.CurrencyDto;
@@ -11,7 +10,7 @@ public class CurrencyMapper implements Mapper<CurrencyEntity, CurrencyDto>{
     private static final CurrencyMapper INSTANCE = new CurrencyMapper();
     @Override
     public CurrencyDto map(CurrencyEntity object) {
-        if(object == null)throw new EntityMapException();
+        if(object == null)return null;
         return CurrencyDto.builder()
                 .id(object.getId())
                 .code(object.getCode())

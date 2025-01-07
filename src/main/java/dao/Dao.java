@@ -8,13 +8,13 @@ import java.util.Optional;
 * Dao CRUD interface
 * */
 public interface Dao<K, E> {
-    Optional<E> findById(K id)throws SQLException;
+    Optional<E> findById(K id);
 
-    List<E> findAll() throws SQLException;
+    List<E> findAll() ;
 
-    K save(E entity)throws SQLException;
+    K save(E entity);
 
-    void update(E entity)throws SQLException;
+    void update(E entity);
 
-    void delete(E entity)throws SQLException;
+    void delete(E entity);
 }

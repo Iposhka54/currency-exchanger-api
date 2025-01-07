@@ -1,5 +1,6 @@
 package dao;
 
+import exception.DaoException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import model.entity.CurrencyEntity;
@@ -35,7 +36,7 @@ public class JdbcCurrencyDao implements CurrencyDao {
                 """;
 
     @Override
-    public Optional<CurrencyEntity> findByCode(String code) throws SQLException {
+    public Optional<CurrencyEntity> findByCode(String code){
         try(Connection connection = ConnectionManager.get();
         PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE_SQL)
         ){
@@ -46,16 +47,18 @@ public class JdbcCurrencyDao implements CurrencyDao {
                 currency = buildCurrency(resultSet);
             }
             return Optional.ofNullable(currency);
+        }catch (SQLException e) {
+            throw new DaoException(e);
         }
     }
 
     @Override
-    public Optional<CurrencyEntity> findById(Integer id) throws SQLException {
+    public Optional<CurrencyEntity> findById(Integer id){
         return Optional.empty();
     }
 
     @Override
-    public List<CurrencyEntity> findAll() throws SQLException {
+    public List<CurrencyEntity> findAll(){
         try(Connection connection = ConnectionManager.get();
         PreparedStatement statement = connection.prepareStatement(FIND_ALL_SQL)
         ){
@@ -65,21 +68,23 @@ public class JdbcCurrencyDao implements CurrencyDao {
                 currencies.add(buildCurrency(resultSet));
             }
             return currencies;
+        }catch (SQLException e) {
+            throw new DaoException(e);
         }
     }
 
     @Override
-    public Integer save(CurrencyEntity entity) throws SQLException {
+    public Integer save(CurrencyEntity entity){
         return 0;
     }
 
     @Override
-    public void update(CurrencyEntity entity) throws SQLException {
+    public void update(CurrencyEntity entity){
 
     }
 
     @Override
-    public void delete(CurrencyEntity entity) throws SQLException {
+    public void delete(CurrencyEntity entity){
 
     }
 

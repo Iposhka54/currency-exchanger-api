@@ -2,6 +2,7 @@ package service;
 
 import dao.CurrencyDao;
 import dao.JdbcCurrencyDao;
+import exception.DaoException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import mapper.CurrencyMapper;
@@ -19,12 +20,12 @@ public class CurrencyService {
     private static final CurrencyDao currencyDao = JdbcCurrencyDao.getInstance();
     private static final CurrencyMapper currencyMapper = CurrencyMapper.getInstance();
 
-    public CurrencyDto findByCode(String code) throws SQLException {
+    public Optional<CurrencyDto> findByCode(String code){
         Optional<CurrencyEntity> currency = currencyDao.findByCode(code);
-        return currencyMapper.map(currency.get());
+        return currency.map(currencyMapper::map);
     }
 
-    public List<CurrencyDto> findAll() throws SQLException {
+    public List<CurrencyDto> findAll(){
         List<CurrencyDto> currencies = new ArrayList<>();
         for (CurrencyEntity currency : currencyDao.findAll()) {
             currencies.add(currencyMapper.map(currency));

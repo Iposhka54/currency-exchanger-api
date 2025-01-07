@@ -6,10 +6,10 @@ import lombok.Value;
 
 @Value
 @Builder
-public final class CurrencyDto {
+public class CurrencyDto {
     Integer id;
-    String code;
     @SerializedName("name")
     String fullName;
+    String code;
     String sign;
 }

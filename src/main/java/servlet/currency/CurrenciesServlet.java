@@ -15,7 +15,7 @@ import java.util.List;
 
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
-    CurrencyService currencyService = CurrencyService.getInstance();
+    private final CurrencyService currencyService = CurrencyService.getInstance();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Gson gson = new Gson();
@@ -23,7 +23,7 @@ public class CurrenciesServlet extends HttpServlet {
             List<CurrencyDto> currencies = currencyService.findAll();
             gson.toJson(currencies, resp.getWriter());
         }catch(Exception e){
-            resp.setStatus(500);
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             gson.toJson(new ErrorResponse("База данных недоступна!"), resp.getWriter());
         }
     }
