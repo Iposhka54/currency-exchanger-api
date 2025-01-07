@@ -2,14 +2,12 @@ package service;
 
 import dao.CurrencyDao;
 import dao.JdbcCurrencyDao;
-import exception.DaoException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import mapper.CurrencyMapper;
 import model.dto.CurrencyDto;
 import model.entity.CurrencyEntity;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
