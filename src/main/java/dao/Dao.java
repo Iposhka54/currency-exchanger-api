@@ -12,7 +12,7 @@ public interface Dao<K, E> {
 
     List<E> findAll() ;
 
-    K save(E entity);
+    E save(E entity);
 
     void update(E entity);
 

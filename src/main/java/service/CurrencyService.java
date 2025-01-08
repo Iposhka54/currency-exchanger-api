@@ -4,7 +4,10 @@ import dao.CurrencyDao;
 import dao.JdbcCurrencyDao;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import mapper.CreateCurrencyMapper;
 import mapper.CurrencyMapper;
+import mapper.Mapper;
+import model.dto.CreateCurrencyDto;
 import model.dto.CurrencyDto;
 import model.entity.CurrencyEntity;
 
@@ -16,7 +19,8 @@ import java.util.Optional;
 public class CurrencyService {
     private static final CurrencyService INSTANCE = new CurrencyService();
     private static final CurrencyDao currencyDao = JdbcCurrencyDao.getInstance();
-    private static final CurrencyMapper currencyMapper = CurrencyMapper.getInstance();
+    private static final Mapper<CurrencyEntity, CurrencyDto> currencyMapper = CurrencyMapper.getInstance();
+    private static final Mapper<CreateCurrencyDto, CurrencyEntity> createCurrencyMapper = CreateCurrencyMapper.getInstance();
 
     public Optional<CurrencyDto> findByCode(String code){
         Optional<CurrencyEntity> currency = currencyDao.findByCode(code);
@@ -31,6 +35,11 @@ public class CurrencyService {
         return currencies;
     }
 
+    public CurrencyDto save(CreateCurrencyDto createCurrency){
+        CurrencyEntity currency = createCurrencyMapper.map(createCurrency);
+        CurrencyEntity resultEntity = currencyDao.save(currency);
+        return currencyMapper.map(resultEntity);
+    }
     public static CurrencyService getInstance(){
         return INSTANCE;
     }

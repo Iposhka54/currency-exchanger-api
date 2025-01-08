@@ -1,15 +1,14 @@
 package dao;
 
+import exception.CurrencyAlreadyExistsException;
 import exception.DaoException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import model.entity.CurrencyEntity;
+import org.sqlite.SQLiteException;
 import util.ConnectionManager;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +16,7 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JdbcCurrencyDao implements CurrencyDao {
     private static final JdbcCurrencyDao INSTANCE = new JdbcCurrencyDao();
+    private static final String SQL_CONSTRAINT_UNIQUE = "SQLITE_CONSTRAINT_UNIQUE";
     private static final String FIND_BY_CODE_SQL = """
             SELECT
                 id,
@@ -34,6 +34,10 @@ public class JdbcCurrencyDao implements CurrencyDao {
                 sign
                 FROM Currencies;
                 """;
+    private static final String SAVE_SQL = """
+            INSERT INTO Currencies(full_name, code, sign)
+            VALUES (?, ?, ?);
+            """;
 
     @Override
     public Optional<CurrencyEntity> findByCode(String code){
@@ -74,13 +78,27 @@ public class JdbcCurrencyDao implements CurrencyDao {
     }
 
     @Override
-    public Integer save(CurrencyEntity entity){
-        return 0;
+    public CurrencyEntity save(CurrencyEntity entity){
+        try(Connection connection = ConnectionManager.get();
+        PreparedStatement statement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)){
+            statement.setString(1, entity.getFullName());
+            statement.setString(2, entity.getCode());
+            statement.setString(3, entity.getSign());
+            statement.executeUpdate();
+            ResultSet keys = statement.getGeneratedKeys();
+            keys.next();
+            entity.setId(keys.getObject(1, Integer.class));
+            return entity;
+        }catch (SQLException e){
+            if (SQL_CONSTRAINT_UNIQUE.equals(((SQLiteException) e).getResultCode().name())){
+                throw new CurrencyAlreadyExistsException(e);
+            }
+            throw new DaoException(e);
+        }
     }
 
     @Override
     public void update(CurrencyEntity entity){
-
     }
 
     @Override

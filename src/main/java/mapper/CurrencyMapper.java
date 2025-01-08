@@ -7,7 +7,7 @@ import model.entity.CurrencyEntity;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CurrencyMapper implements Mapper<CurrencyEntity, CurrencyDto>{
-    private static final CurrencyMapper INSTANCE = new CurrencyMapper();
+    private static final Mapper<CurrencyEntity, CurrencyDto> INSTANCE = new CurrencyMapper();
     @Override
     public CurrencyDto map(CurrencyEntity object) {
         if(object == null)return null;
@@ -19,7 +19,7 @@ public class CurrencyMapper implements Mapper<CurrencyEntity, CurrencyDto>{
                 .build();
     }
 
-    public static CurrencyMapper getInstance() {
+    public static Mapper<CurrencyEntity, CurrencyDto> getInstance() {
         return INSTANCE;
     }
 }
