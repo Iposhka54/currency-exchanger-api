@@ -5,6 +5,7 @@ import exception.DaoException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import model.entity.CurrencyEntity;
+import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
 import util.ConnectionManager;
 
@@ -16,7 +17,6 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JdbcCurrencyDao implements CurrencyDao {
     private static final JdbcCurrencyDao INSTANCE = new JdbcCurrencyDao();
-    private static final String SQL_CONSTRAINT_UNIQUE = "SQLITE_CONSTRAINT_UNIQUE";
     private static final String FIND_BY_CODE_SQL = """
             SELECT
                 id,
@@ -90,7 +90,7 @@ public class JdbcCurrencyDao implements CurrencyDao {
             entity.setId(keys.getObject(1, Integer.class));
             return entity;
         }catch (SQLException e){
-            if (SQL_CONSTRAINT_UNIQUE.equals(((SQLiteException) e).getResultCode().name())){
+            if (SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE.code == ((SQLiteException) e).getResultCode().code){
                 throw new CurrencyAlreadyExistsException(e);
             }
             throw new DaoException(e);
@@ -98,11 +98,12 @@ public class JdbcCurrencyDao implements CurrencyDao {
     }
 
     @Override
-    public void update(CurrencyEntity entity){
+    public void update(CurrencyEntity entity) {
+
     }
 
     @Override
-    public void delete(CurrencyEntity entity){
+    public void delete(CurrencyEntity entity) {
 
     }
 
@@ -110,12 +111,16 @@ public class JdbcCurrencyDao implements CurrencyDao {
         return INSTANCE;
     }
 
-    CurrencyEntity buildCurrency(ResultSet resultSet) throws SQLException {
+    public CurrencyEntity buildCurrency(ResultSet resultSet, String prefix) throws SQLException {
         return CurrencyEntity.builder()
-                .id(resultSet.getObject("id", Integer.class))
-                .fullName(resultSet.getObject("full_name", String.class))
-                .code(resultSet.getObject("code", String.class))
-                .sign(resultSet.getObject("sign", String.class))
+                .id(resultSet.getObject(prefix + "id", Integer.class))
+                .fullName(resultSet.getObject(prefix + "full_name", String.class))
+                .code(resultSet.getObject(prefix + "code", String.class))
+                .sign(resultSet.getObject(prefix + "sign", String.class))
                 .build();
+    }
+
+    private CurrencyEntity buildCurrency(ResultSet resultSet) throws SQLException {
+        return buildCurrency(resultSet, "");
     }
 }

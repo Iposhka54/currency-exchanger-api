@@ -14,7 +14,7 @@ public class CreateCurrencyMapper implements Mapper<CreateCurrencyDto, CurrencyE
 
 
     @Override
-    public CurrencyEntity map(CreateCurrencyDto object) {
+    public CurrencyEntity mapFrom(CreateCurrencyDto object) {
         if(object == null) return null;
         return CurrencyEntity.builder()
                 .code(object.getCode())

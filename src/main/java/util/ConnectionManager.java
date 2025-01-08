@@ -7,12 +7,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 @UtilityClass
 public class ConnectionManager {
+    private static final String INIT_QUERY = "PRAGMA foreign_keys = ON";
     private static final SQLiteConfig CONFIG = new SQLiteConfig();
     static{
+        loadDriver();
         SQLiteConfig CONFIG = new SQLiteConfig();
         CONFIG.enforceForeignKeys(true);
         CONFIG.setEncoding(SQLiteConfig.Encoding.UTF8);
@@ -44,5 +47,22 @@ public class ConnectionManager {
             }
         }
         return null;
+    }
+
+    private void loadDriver() {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void initForeignKeys() {
+        try (Connection conn = get();
+             var stmt = conn.createStatement()) {
+            stmt.executeUpdate(INIT_QUERY);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

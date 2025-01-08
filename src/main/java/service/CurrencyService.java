@@ -24,21 +24,21 @@ public class CurrencyService {
 
     public Optional<CurrencyDto> findByCode(String code){
         Optional<CurrencyEntity> currency = currencyDao.findByCode(code);
-        return currency.map(currencyMapper::map);
+        return currency.map(currencyMapper::mapFrom);
     }
 
     public List<CurrencyDto> findAll(){
         List<CurrencyDto> currencies = new ArrayList<>();
         for (CurrencyEntity currency : currencyDao.findAll()) {
-            currencies.add(currencyMapper.map(currency));
+            currencies.add(currencyMapper.mapFrom(currency));
         }
         return currencies;
     }
 
     public CurrencyDto save(CreateCurrencyDto createCurrency){
-        CurrencyEntity currency = createCurrencyMapper.map(createCurrency);
+        CurrencyEntity currency = createCurrencyMapper.mapFrom(createCurrency);
         CurrencyEntity resultEntity = currencyDao.save(currency);
-        return currencyMapper.map(resultEntity);
+        return currencyMapper.mapFrom(resultEntity);
     }
     public static CurrencyService getInstance(){
         return INSTANCE;
