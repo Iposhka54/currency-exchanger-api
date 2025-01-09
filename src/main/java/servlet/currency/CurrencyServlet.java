@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import model.ErrorResponse;
 import model.dto.CurrencyDto;
 import service.CurrencyService;
+import util.Validator;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -22,7 +23,7 @@ public class CurrencyServlet extends HttpServlet {
         String code = req.getPathInfo().replaceFirst("/", "").toUpperCase();
         Gson gson = new Gson();
             try {
-                if(code.isEmpty()){
+                if(code.length() != Validator.CORRECT_CODE_LENGTH) {
                     resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     gson.toJson(new ErrorResponse("The currency code is missing in the address"), resp.getWriter());
                     return;

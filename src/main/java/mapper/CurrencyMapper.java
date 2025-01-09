@@ -29,6 +29,13 @@ public class CurrencyMapper implements Mapper<CurrencyEntity, CurrencyDto>{
                 .build();
     }
 
+    public CurrencyEntity mapToOnlyCode(CurrencyDto object) {
+        if(object == null)return null;
+        return CurrencyEntity.builder()
+                .code(object.getCode())
+                .build();
+    }
+
 
     public static Mapper<CurrencyEntity, CurrencyDto> getInstance() {
         return INSTANCE;

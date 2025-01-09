@@ -23,30 +23,58 @@ import java.util.Optional;
 public class JdbcExchangeRateDao implements ExchangeRateDao {
     private static final ExchangeRateDao INSTANCE = new JdbcExchangeRateDao();
     private static final String FIND_ALL_SQL = """
-            SELECT 
-                ExchangeRates.id AS id,
-                base.id,
-                base.code,
-                base.full_name,
-                base.sign,
-                target.id,
-                target.code,
-                target.sign,
-                ExchangeRates.rate AS rate
-            
+            SELECT
+                    ExchangeRates.id AS id,
+                    base.id AS base_id,
+                    base.code AS base_code,
+                    base.full_name AS base_full_name,
+                    base.sign AS base_sign,
+                    target.id AS target_id,
+                    target.code AS target_code,
+                    target.sign AS target_sign,
+                    target.full_name AS target_full_name,
+                    ExchangeRates.rate AS rate
             FROM ExchangeRates
-            JOIN Currencies AS base
-            ON base_currency_id = base.id
-            JOIN Currencies AS target
-            ON target_currency_id = target.id;
+            JOIN Currencies AS base ON base_currency_id = base.id
+            JOIN Currencies AS target ON target_currency_id = target.id
             """;
     private static final String SAVE_SQL = """
             INSERT INTO ExchangeRates(base_currency_id, target_currency_id, rate)
             VALUES (?, ?, ?);
             """;
+
+    private static final String FIND_BY_CODES_SQL = FIND_ALL_SQL + """
+            WHERE base.code = ? AND target.code = ?;
+            """;
+
     @Override
-    public Optional<ExchangeRateEntity> findByCodes(CurrencyPairCodesDto dto) {
-        return Optional.empty();
+    public Optional<ExchangeRateEntity> findByCodes(ExchangeRateEntity dto) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement statement = connection.prepareStatement(FIND_BY_CODES_SQL);
+        ){
+            statement.setString(1, dto.getBaseCurrency().getCode());
+            statement.setString(2, dto.getTargetCurrency().getCode());
+            ResultSet resultSet = statement.executeQuery();
+            Optional<ExchangeRateEntity> result = Optional.empty();
+            if (resultSet.next()) {
+                buildExchangeRate(dto, resultSet);
+                result = Optional.of(dto);
+            }
+            return result;
+        }catch (SQLException e) {
+            throw new DaoException(e);
+        }
+    }
+
+    private static void buildExchangeRate(ExchangeRateEntity dto, ResultSet resultSet) throws SQLException {
+        dto.setRate(resultSet.getBigDecimal("rate"));
+        dto.setId(resultSet.getInt("id"));
+        dto.getBaseCurrency().setId(resultSet.getInt("base_id"));
+        dto.getBaseCurrency().setFullName(resultSet.getString("base_full_name"));
+        dto.getBaseCurrency().setSign(resultSet.getString("base_sign"));
+        dto.getTargetCurrency().setId(resultSet.getInt("target_id"));
+        dto.getTargetCurrency().setFullName(resultSet.getString("target_full_name"));
+        dto.getTargetCurrency().setSign(resultSet.getString("target_sign"));
     }
 
     @Override
@@ -73,8 +101,8 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
     public ExchangeRateEntity buildExchangeRate(ResultSet resultSet) throws SQLException {
         return new ExchangeRateEntity(
                 resultSet.getObject("id", Integer.class),
-                JdbcCurrencyDao.getInstance().buildCurrency(resultSet),
-                JdbcCurrencyDao.getInstance().buildCurrency(resultSet),
+                JdbcCurrencyDao.getInstance().buildCurrency(resultSet, "base_"),
+                JdbcCurrencyDao.getInstance().buildCurrency(resultSet, "target_"),
                 resultSet.getObject("rate", BigDecimal.class)
         );
     }

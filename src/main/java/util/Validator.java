@@ -7,6 +7,7 @@ import model.dto.CreateCurrencyDto;
 public class Validator {
     public static final Integer CORRECT_CODE_LENGTH = 3;
     public static final Integer CORRECT_NAME_LENGTH = 40;
+    public static final Integer CORRECT_PAIR_LENGTH = 6;
     public static final Integer CORRECT_SIGN_LENGTH = 3;
     private static final String REGEX_SIGN = "[a-zA-Z]{0,2}[\u20A0-\u20BF$¥£₹€₽₺]$";
     private static final String REGEX_SPLIT = " ";
@@ -32,8 +33,11 @@ public class Validator {
         return true;
     }
 
-    private static boolean isCorrectSign(String sign) {
-        return sign.matches(REGEX_SIGN);
+    public static boolean isValidPair(String first, String second){
+        if (!isValidCurrencyCode(first) || !isValidCurrencyCode(second)){
+            return false;
+        }
+        return true;
     }
 
     public static boolean isValidCurrencyCode(String code){
@@ -61,5 +65,9 @@ public class Validator {
             }
         }
         return true;
+    }
+
+    private static boolean isCorrectSign(String sign) {
+        return sign.matches(REGEX_SIGN);
     }
 }

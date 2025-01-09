@@ -113,10 +113,10 @@ public class JdbcCurrencyDao implements CurrencyDao {
 
     public CurrencyEntity buildCurrency(ResultSet resultSet, String prefix) throws SQLException {
         return CurrencyEntity.builder()
-                .id(resultSet.getObject("id", Integer.class))
-                .fullName(resultSet.getObject("full_name", String.class))
-                .code(resultSet.getObject("code", String.class))
-                .sign(resultSet.getObject("sign", String.class))
+                .id(resultSet.getInt(prefix + "id"))
+                .fullName(resultSet.getString(prefix + "full_name"))
+                .code(resultSet.getString(prefix + "code"))
+                .sign(resultSet.getString(prefix + "sign"))
                 .build();
     }
 
