@@ -113,14 +113,14 @@ public class JdbcCurrencyDao implements CurrencyDao {
 
     public CurrencyEntity buildCurrency(ResultSet resultSet, String prefix) throws SQLException {
         return CurrencyEntity.builder()
-                .id(resultSet.getObject(prefix + "id", Integer.class))
-                .fullName(resultSet.getObject(prefix + "full_name", String.class))
-                .code(resultSet.getObject(prefix + "code", String.class))
-                .sign(resultSet.getObject(prefix + "sign", String.class))
+                .id(resultSet.getObject("id", Integer.class))
+                .fullName(resultSet.getObject("full_name", String.class))
+                .code(resultSet.getObject("code", String.class))
+                .sign(resultSet.getObject("sign", String.class))
                 .build();
     }
 
-    private CurrencyEntity buildCurrency(ResultSet resultSet) throws SQLException {
+    public CurrencyEntity buildCurrency(ResultSet resultSet) throws SQLException {
         return buildCurrency(resultSet, "");
     }
 }

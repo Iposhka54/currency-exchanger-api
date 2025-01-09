@@ -58,7 +58,7 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
     public List<ExchangeRateEntity> findAll() {
         try (Connection connection = ConnectionManager.get();
              PreparedStatement statement = connection.prepareStatement(FIND_ALL_SQL);
-        ) {
+        ){
             ResultSet resultSet = statement.executeQuery();
             List<ExchangeRateEntity> result = new ArrayList<>();
             while (resultSet.next()) {
@@ -73,8 +73,8 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
     public ExchangeRateEntity buildExchangeRate(ResultSet resultSet) throws SQLException {
         return new ExchangeRateEntity(
                 resultSet.getObject("id", Integer.class),
-                JdbcCurrencyDao.getInstance().buildCurrency(resultSet, "base_"),
-                JdbcCurrencyDao.getInstance().buildCurrency(resultSet, "target_"),
+                JdbcCurrencyDao.getInstance().buildCurrency(resultSet),
+                JdbcCurrencyDao.getInstance().buildCurrency(resultSet),
                 resultSet.getObject("rate", BigDecimal.class)
         );
     }

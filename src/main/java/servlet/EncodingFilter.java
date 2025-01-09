@@ -13,6 +13,7 @@ public class EncodingFilter implements Filter {
         servletRequest.setCharacterEncoding(StandardCharsets.UTF_8.name());
         servletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
         servletResponse.setContentType("application/json");
+
         filterChain.doFilter(servletRequest, servletResponse);
     }
 }

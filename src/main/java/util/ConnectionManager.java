@@ -12,7 +12,7 @@ import java.sql.SQLException;
 
 @UtilityClass
 public class ConnectionManager {
-    private static final String INIT_QUERY = "PRAGMA foreign_keys = ON";
+    private static final String DATABASE_URL = "jdbc:sqlite:C:\\work\\currency_exchange.db";
     private static final SQLiteConfig CONFIG = new SQLiteConfig();
     static{
         loadDriver();
@@ -20,7 +20,7 @@ public class ConnectionManager {
         CONFIG.enforceForeignKeys(true);
         CONFIG.setEncoding(SQLiteConfig.Encoding.UTF8);
         try{
-            Connection conn = DriverManager.getConnection(getConnectionUrl(), CONFIG.toProperties());
+            Connection conn = DriverManager.getConnection(DATABASE_URL, CONFIG.toProperties());
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -28,7 +28,7 @@ public class ConnectionManager {
     }
     public static Connection get() {
         try {
-            Connection connection = DriverManager.getConnection(getConnectionUrl(), CONFIG.toProperties());
+            Connection connection = DriverManager.getConnection(DATABASE_URL, CONFIG.toProperties());
             connection.setAutoCommit(true);
             return connection;
 
@@ -37,31 +37,10 @@ public class ConnectionManager {
         }
     }
 
-    private String getConnectionUrl() {
-        URL url = ConnectionManager.class.getClassLoader().getResource("currency_exchange.db");
-        if (url != null) {
-            try {
-                return String.format("jdbc:sqlite:" + url.toURI());
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return null;
-    }
-
     private void loadDriver() {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void initForeignKeys() {
-        try (Connection conn = get();
-             var stmt = conn.createStatement()) {
-            stmt.executeUpdate(INIT_QUERY);
-        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }

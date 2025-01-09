@@ -65,7 +65,7 @@ public class CurrenciesServlet extends HttpServlet {
                 .sign(sign.toUpperCase())
                 .build();
 
-            if(!Validator.isValidCurrencyParams(currency)){
+            if(Validator.isValidCurrencyParams(currency)){
                 try{
                     CurrencyDto save = currencyService.save(currency);
                     resp.setStatus(HttpServletResponse.SC_CREATED);
@@ -78,6 +78,10 @@ public class CurrenciesServlet extends HttpServlet {
                     resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     gson.toJson(databaseError, resp.getWriter());
                 }
+            }
+            else{
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                gson.toJson(new ErrorResponse("Parameters are not correct"), resp.getWriter());
             }
     }
 }
