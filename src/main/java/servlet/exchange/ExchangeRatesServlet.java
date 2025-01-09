@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @WebServlet("/exchangeRates")
 public class ExchangeRatesServlet extends HttpServlet {
@@ -95,7 +96,11 @@ public class ExchangeRatesServlet extends HttpServlet {
         }catch (DaoException e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             gson.toJson(databaseError, resp.getWriter());
-        }catch (ExchangeRateAlreadyExistsException e){
+        }catch (NoSuchElementException e){
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            gson.toJson(new ErrorResponse("Base or target currency doesn't exist"), resp.getWriter());
+        }
+        catch (ExchangeRateAlreadyExistsException e){
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             gson.toJson(new ErrorResponse("Exchange rate already exists"), resp.getWriter());
         }
