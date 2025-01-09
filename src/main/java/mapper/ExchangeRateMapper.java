@@ -28,6 +28,16 @@ public class ExchangeRateMapper implements Mapper<ExchangeRateEntity, ExchangeRa
                 object.getRate()
         );
     }
+
+    public ExchangeRateEntity mapToOnlyCode(ExchangeRateDto object) {
+        if(object == null) return null;
+        return new ExchangeRateEntity(
+                currencyMapper.mapToOnlyCode(object.getBaseCurrency()),
+                currencyMapper.mapToOnlyCode(object.getTargetCurrency()),
+                object.getRate()
+        );
+    }
+
     public static Mapper<ExchangeRateEntity, ExchangeRateDto> getInstance() {
         return INSTANCE;
     }

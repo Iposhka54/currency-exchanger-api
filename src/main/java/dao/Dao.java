@@ -14,7 +14,7 @@ public interface Dao<K, E> {
 
     E save(E entity);
 
-    void update(E entity);
+    E update(E entity);
 
-    void delete(E entity);
+    E delete(E entity);
 }

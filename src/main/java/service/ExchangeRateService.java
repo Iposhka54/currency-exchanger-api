@@ -45,6 +45,12 @@ public class ExchangeRateService {
         return maybeExchangeRate.map(exchangeRateMapper::mapFrom);
     }
 
+    public Optional<ExchangeRateDto> update(ExchangeRateDto dto){
+        ExchangeRateEntity exchangeRate = exchangeRateMapper.mapToOnlyCode(dto);
+        Optional<ExchangeRateEntity> update = exchangeRateDao.Update(exchangeRate);
+        return update.map(exchangeRateMapper::mapFrom);
+    }
+
     public static ExchangeRateService getInstance() {
         return INSTANCE;
     }

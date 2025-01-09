@@ -34,6 +34,7 @@ public class JdbcCurrencyDao implements CurrencyDao {
                 sign
                 FROM Currencies;
                 """;
+
     private static final String SAVE_SQL = """
             INSERT INTO Currencies(full_name, code, sign)
             VALUES (?, ?, ?);
@@ -98,13 +99,13 @@ public class JdbcCurrencyDao implements CurrencyDao {
     }
 
     @Override
-    public void update(CurrencyEntity entity) {
-
+    public CurrencyEntity update(CurrencyEntity entity) {
+        return null;
     }
 
     @Override
-    public void delete(CurrencyEntity entity) {
-
+    public CurrencyEntity delete(CurrencyEntity entity) {
+        return null;
     }
 
     public static JdbcCurrencyDao getInstance() {

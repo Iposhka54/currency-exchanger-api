@@ -5,16 +5,14 @@ import exception.ExchangeRateAlreadyExistsException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import model.dto.CurrencyPairCodesDto;
+import model.entity.CurrencyEntity;
 import model.entity.ExchangeRateEntity;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
 import util.ConnectionManager;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +20,7 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JdbcExchangeRateDao implements ExchangeRateDao {
     private static final ExchangeRateDao INSTANCE = new JdbcExchangeRateDao();
+    private final JdbcCurrencyDao currencyDao = JdbcCurrencyDao.getInstance();
     private static final String FIND_ALL_SQL = """
             SELECT
                     ExchangeRates.id AS id,
@@ -45,6 +44,13 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
 
     private static final String FIND_BY_CODES_SQL = FIND_ALL_SQL + """
             WHERE base.code = ? AND target.code = ?;
+            """;
+
+    private static final String UPDATE_SQL = """
+            UPDATE ExchangeRates
+                SET rate = ?
+                WHERE base_currency_id = ? AND target_currency_id = ?
+                RETURNING id;
             """;
 
     @Override
@@ -131,13 +137,42 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
     }
 
     @Override
-    public void update(ExchangeRateEntity entity) {
+    public Optional<ExchangeRateEntity> Update(ExchangeRateEntity entity) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement statement = connection.prepareStatement(UPDATE_SQL)
+        ){
+            CurrencyEntity base = currencyDao.findByCode(entity.getBaseCurrency().getCode()).orElseThrow();
+            CurrencyEntity target = currencyDao.findByCode(entity.getTargetCurrency().getCode()).orElseThrow();
+            entity.setBaseCurrency(base);
+            entity.setTargetCurrency(target);
 
+            statement.setBigDecimal(1, entity.getRate());
+            statement.setInt(2, entity.getBaseCurrency().getId());
+            statement.setInt(3, entity.getTargetCurrency().getId());
+            ResultSet rs = statement.executeQuery();
+            Optional<ExchangeRateEntity> result = Optional.empty();
+            if (rs.next()) {
+                result = Optional.of(new ExchangeRateEntity(
+                        rs.getInt("id"),
+                        entity.getBaseCurrency(),
+                        entity.getTargetCurrency(),
+                        entity.getRate()
+                ));
+            }
+            return result;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
     }
 
     @Override
-    public void delete(ExchangeRateEntity entity) {
+    public ExchangeRateEntity update(ExchangeRateEntity entity) {
+        return null;
+    }
 
+    @Override
+    public ExchangeRateEntity delete(ExchangeRateEntity entity) {
+        return null;
     }
 
     public static ExchangeRateDao getInstance() {
