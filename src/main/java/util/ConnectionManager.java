@@ -1,47 +1,37 @@
 package util;
 
 import lombok.experimental.UtilityClass;
-import org.sqlite.SQLiteConfig;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 @UtilityClass
 public class ConnectionManager {
-    private static final String DATABASE_URL = "jdbc:sqlite:C:\\work\\currency_exchange.db";
-    private static final SQLiteConfig CONFIG = new SQLiteConfig();
-    static{
-        loadDriver();
-        SQLiteConfig CONFIG = new SQLiteConfig();
-        CONFIG.enforceForeignKeys(true);
-        CONFIG.setEncoding(SQLiteConfig.Encoding.UTF8);
-        try{
-            Connection conn = DriverManager.getConnection(DATABASE_URL, CONFIG.toProperties());
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+
     public static Connection get() {
+        Connection connection = null;
         try {
-            Connection connection = DriverManager.getConnection(DATABASE_URL, CONFIG.toProperties());
-            connection.setAutoCommit(true);
-            return connection;
+            URL dbPath = ConnectionManager.class.getClassLoader().getResource("currency_exchange.db");
+            String path = null;
+            try {
+                path = new File(dbPath.toURI()).getAbsolutePath();
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection(String.format("jdbc:sqlite:%s", path));
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void loadDriver() {
-        try {
-            Class.forName("org.sqlite.JDBC");
+            System.out.println("Connection FAIL");
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+        return connection;
     }
 }
