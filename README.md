@@ -265,4 +265,4 @@ specified in the query address. Example of response:
 8. Click Apply and start Tomcat
 
 ## Communication
-My Telegram - https://t.me/IamNotARapperr
+My Telegram - https://t.me/subculture54
