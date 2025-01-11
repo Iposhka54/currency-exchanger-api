@@ -71,8 +71,8 @@ public class ExchangeRateService {
 
     public Optional<ExchangeRateDto> update(ExchangeRateDto dto){
         ExchangeRateEntity exchangeRate = exchangeRateMapper.mapToOnlyCode(dto);
-        Optional<ExchangeRateEntity> update = exchangeRateDao.Update(exchangeRate);
-        return update.map(exchangeRateMapper::mapFrom);
+        ExchangeRateEntity update = exchangeRateDao.update(exchangeRate);
+        return Optional.ofNullable(exchangeRateMapper.mapFrom(update));
     }
 
     public static ExchangeRateService getInstance() {
