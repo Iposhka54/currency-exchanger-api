@@ -4,7 +4,6 @@ import exception.DaoException;
 import exception.ExchangeRateAlreadyExistsException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import model.dto.CurrencyPairCodesDto;
 import model.entity.CurrencyEntity;
 import model.entity.ExchangeRateEntity;
 import org.sqlite.SQLiteErrorCode;
@@ -12,6 +11,7 @@ import org.sqlite.SQLiteException;
 import util.ConnectionManager;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +46,10 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
             WHERE base.code = ? AND target.code = ?;
             """;
 
+    private static final String FIND_BY_CODES_REVERSE_SQL = FIND_ALL_SQL + """
+            WHERE target.code = ? AND base.code = ?;
+            """;
+
     private static final String UPDATE_SQL = """
             UPDATE ExchangeRates
                 SET rate = ?
@@ -53,17 +57,51 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
                 RETURNING id;
             """;
 
+    private static final String CROSS_SQL = """
+            SELECT
+                base.id AS base_id,
+                base.full_name AS base_full_name,
+                base.code AS base_code,
+                base.sign AS base_sign,
+                target.id AS target_id,
+                target.full_name AS target_full_name,
+                target.code AS target_code,
+                target.sign AS target_sign,
+                e_target.rate / e_base.rate AS rate
+            FROM
+                ExchangeRates AS e_base,
+                ExchangeRates AS e_target
+            JOIN Currencies AS base
+            ON e_base.target_currency_id = base.id
+            Join Currencies AS target
+                    ON e_target.target_currency_id = target.id
+            JOIN Currencies AS cross_
+                 ON e_base.base_currency_id = cross_.id
+            WHERE cross_.code = ? AND base.code = ? AND target.code = ?;
+            """;
+    private static final String CROSS_CODE = "USD";
+
     @Override
     public Optional<ExchangeRateEntity> findByCodes(ExchangeRateEntity dto) {
+        return findByCodes(dto, FIND_BY_CODES_SQL);
+    }
+
+    public Optional<ExchangeRateEntity> findByCodes(ExchangeRateEntity dto, String sql){
         try (Connection connection = ConnectionManager.get();
-             PreparedStatement statement = connection.prepareStatement(FIND_BY_CODES_SQL);
+             PreparedStatement statement = connection.prepareStatement(sql);
         ){
+            Optional<CurrencyEntity> base = currencyDao.findByCode(dto.getBaseCurrency().getCode());
+            Optional<CurrencyEntity> target = currencyDao.findByCode(dto.getTargetCurrency().getCode());
+            if(base.isEmpty() || target.isEmpty()){
+                return Optional.empty();
+            }
             statement.setString(1, dto.getBaseCurrency().getCode());
             statement.setString(2, dto.getTargetCurrency().getCode());
             ResultSet resultSet = statement.executeQuery();
             Optional<ExchangeRateEntity> result = Optional.empty();
             if (resultSet.next()) {
-                buildExchangeRate(dto, resultSet);
+                boolean reverse = sql.equals(FIND_BY_CODES_REVERSE_SQL);
+                buildExchangeRate(dto, resultSet, reverse);
                 result = Optional.of(dto);
             }
             return result;
@@ -72,15 +110,35 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
         }
     }
 
-    private static void buildExchangeRate(ExchangeRateEntity dto, ResultSet resultSet) throws SQLException {
-        dto.setRate(resultSet.getBigDecimal("rate"));
-        dto.setId(resultSet.getInt("id"));
-        dto.getBaseCurrency().setId(resultSet.getInt("base_id"));
-        dto.getBaseCurrency().setFullName(resultSet.getString("base_full_name"));
-        dto.getBaseCurrency().setSign(resultSet.getString("base_sign"));
-        dto.getTargetCurrency().setId(resultSet.getInt("target_id"));
-        dto.getTargetCurrency().setFullName(resultSet.getString("target_full_name"));
-        dto.getTargetCurrency().setSign(resultSet.getString("target_sign"));
+    private static void buildExchangeRate(ExchangeRateEntity dto, ResultSet resultSet, boolean reverse) throws SQLException {
+        if (!reverse) {
+            dto.setRate(resultSet.getBigDecimal("rate"));
+            dto.setId(resultSet.getInt("id"));
+            dto.getBaseCurrency().setId(resultSet.getInt("base_id"));
+            dto.getBaseCurrency().setFullName(resultSet.getString("base_full_name"));
+            dto.getBaseCurrency().setSign(resultSet.getString("base_sign"));
+            dto.setTargetCurrency(new CurrencyEntity(
+                    resultSet.getInt("target_id"),
+                    resultSet.getString("target_full_name"),
+                    resultSet.getString("target_code"),
+                    resultSet.getString("target_sign")
+            ));
+        } else {
+            dto.setRate(BigDecimal.ONE.divide(resultSet.getBigDecimal("rate"), 6, RoundingMode.HALF_UP));
+            dto.setId(resultSet.getInt("id"));
+            dto.setBaseCurrency(new CurrencyEntity(
+                    resultSet.getInt("target_id"),
+                    resultSet.getString("target_full_name"),
+                    resultSet.getString("target_code"),
+                    resultSet.getString("target_sign")
+            ));
+            dto.setTargetCurrency(new CurrencyEntity(
+                    resultSet.getInt("base_id"),
+                    resultSet.getString("base_full_name"),
+                    resultSet.getString("base_code"),
+                    resultSet.getString("base_sign")
+            ));
+        }
     }
 
     @Override
@@ -157,6 +215,40 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
                         entity.getBaseCurrency(),
                         entity.getTargetCurrency(),
                         entity.getRate()
+                ));
+            }
+            return result;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public Optional<ExchangeRateEntity> exchange(ExchangeRateEntity entity) {
+        Optional<ExchangeRateEntity> maybeExchangeRate = findByCodes(entity, FIND_BY_CODES_SQL);
+        if(maybeExchangeRate.isPresent()) {
+            return maybeExchangeRate;
+        }
+        maybeExchangeRate = findByCodes(entity, FIND_BY_CODES_REVERSE_SQL);
+        if(maybeExchangeRate.isPresent()) {
+            return maybeExchangeRate;
+        }
+        return crossExchange(entity);
+    }
+
+    private Optional<ExchangeRateEntity> crossExchange(ExchangeRateEntity entity) {
+        try (Connection connection = ConnectionManager.get();
+            PreparedStatement statement = connection.prepareStatement(CROSS_SQL)
+        ){
+            statement.setString(1, CROSS_CODE);
+            statement.setString(2, entity.getBaseCurrency().getCode());
+            statement.setString(3, entity.getTargetCurrency().getCode());
+            ResultSet resultSet = statement.executeQuery();
+            Optional<ExchangeRateEntity> result = Optional.empty();
+            if(resultSet.next()) {
+                result = Optional.of(new ExchangeRateEntity(
+                        currencyDao.buildCurrency(resultSet, "base_"),
+                        currencyDao.buildCurrency(resultSet, "target_"),
+                        resultSet.getBigDecimal("rate")
                 ));
             }
             return result;

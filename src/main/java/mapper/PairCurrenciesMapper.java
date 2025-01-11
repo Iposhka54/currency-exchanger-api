@@ -11,7 +11,8 @@ public class PairCurrenciesMapper implements Mapper<CurrencyPairCodesDto, Exchan
     private final CurrencyMapper currencyMapper = (CurrencyMapper) CurrencyMapper.getInstance();
     @Override
     public ExchangeRateEntity mapFrom(CurrencyPairCodesDto object) {
-        return new ExchangeRateEntity(currencyMapper.mapToOnlyCode(object.getBase()), currencyMapper.mapToOnlyCode(object.getTarget()));
+        return new ExchangeRateEntity(currencyMapper.mapToOnlyCode(object.getBase()),
+                currencyMapper.mapToOnlyCode(object.getTarget()));
     }
 
     public static PairCurrenciesMapper getInstance() {
